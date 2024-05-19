@@ -29,7 +29,8 @@ public class Interactable : MonoBehaviour
 
     public void Interact(AgentController agent)
     {
-        Interacted?.Invoke(agent, this);
+        
+        Interacted?.Invoke(agent.gameObject, this);
         Debug.Log("Interact event fired");
     }
 }

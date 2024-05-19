@@ -44,7 +44,7 @@ public class HasHealth : MonoBehaviour, IGatherable
         DamageTaken?.Invoke(damage);
     }
 
-    public void FillQuery(ref Dictionary<string, object> query)
+    public void FillQuery(Dictionary<string, object> query)
     {
         query.Add("RemainingHealth", RemainingHealth);
         query.Add("MaxHealth", MaxHealth);
