@@ -1,17 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Interactable : MonoBehaviour
 {
-    public delegate void OnInteract(AgentController agent, Interactable interactable);
+    public delegate void OnInteract(EventInfo eventInfo);
     public event OnInteract Interacted;
 
-    Collider2D collider;
+    Collider collider_;
 
     void Awake()
     {
-        collider = GetComponent<Collider2D>();
+        collider_ = GetComponent<Collider>();
         Interacted += NPC_BehaviorManager.Instance.OnInteract;
     }
 
@@ -27,10 +28,13 @@ public class Interactable : MonoBehaviour
         
     }
 
-    public void Interact(AgentController agent)
+    public void Interact(GameObject initiator)
     {
+        EventInfo event_ = new EventInfo();
+        event_.sender = initiator;
+        event_.receiver = this.GameObject();
         
-        Interacted?.Invoke(agent.gameObject, this);
+        Interacted?.Invoke(event_);
         Debug.Log("Interact event fired");
     }
 }

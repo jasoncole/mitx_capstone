@@ -23,8 +23,8 @@ public interface IRespondable
 
 public class EventInfo // every event uses this class. each event will only use some fields
 {
-    public gameObject sender;
-    public gameObject receiver;
+    public GameObject sender;
+    public GameObject receiver;
 }
 
 public class Condition
@@ -34,32 +34,17 @@ public class Condition
     public Func<object, bool> criterion_func;
 }
 
-public class Query
-{
-    public string query_name;
-    Dictionary<string, object> query_entries;
-
-    public void AllocateAndGatherQuery(GameObject subject)
-    {
-        query_entries = new Dictionary<string, object>();
-        foreach(var component in subject.GetComponents<IGatherable>())
-        {
-            component.FillQuery(query_entries);
-        }
-    }
-}
-
 public class Behavior
 {
     // response
     //public IRespondable response_component; // the component attached to the BehaviorClass object that stores the response functions
     // unnecessary
     public delegate void ResponseCallback(EventInfo event_info);
-    public ResponseCallback response_callback(EventInfo event_info);
+    public ResponseCallback response_callback;
 
     // rules
     public List<Condition> conditions;
-    int score_modifier = 0;
+    public int score_modifier = 0;
 
     public void AddCondition(string query_name, string query_entry, Func<object, bool> criterion_func)
     {
@@ -72,14 +57,13 @@ public class Behavior
     }
     public int CalculateScore()
     {
-        return Conditions.Count() + score_modifier;
+        return conditions.Count + score_modifier;
     }
 
-    void Init(ResponseCallback response_callback, int score_modifier)
+    public void Init(ResponseCallback callback)
     {
-        response_callback = response_callback;
-        Conditions = new Dictionary<string, Func<object, bool>>();
-        score_modifier = score_modifier;
+        response_callback = callback;
+        conditions = new List<Condition>();
     }
 }
 
@@ -128,11 +112,11 @@ public class NPC_BehaviorManager : MonoBehaviour
 
     int CompareConditionCount(Behavior first, Behavior second)
     {
-        if (first.Conditions.Count > second.Conditions.Count)
+        if (first.conditions.Count > second.conditions.Count)
         {
             return 1;
         }
-        else if (first.Conditions.Count < second.Conditions.Count)
+        else if (first.conditions.Count < second.conditions.Count)
         {
             return -1;
         }
@@ -151,10 +135,18 @@ public class NPC_BehaviorManager : MonoBehaviour
         
     }
 
-    
+    public Dictionary<string, object> GatherQuery(GameObject subject)
+    {
+        Dictionary<string, object> ret = new Dictionary<string, object>();
+        foreach(IGatherable component in subject.GetComponents<IGatherable>())
+        {
+            component.FillQuery(ret);
+        }
+        return ret;
+    }
 
     // TODO: use jobs for multithreading?
-    Behavior QueryEventResponse(string BehaviorTableKey, List<Query> Queries) // returns an id to the response with the best match
+    Behavior QueryEventResponse(string BehaviorTableKey, Dictionary<string, Dictionary<string, object>> Queries) // returns an id to the response with the best match
     {
         // exit if requested behavior table is not found
         if (!behavior_tables.ContainsKey(BehaviorTableKey))
@@ -169,24 +161,10 @@ public class NPC_BehaviorManager : MonoBehaviour
         {
             bool satisfied = true;
             
-            foreach (Condition condition_ in behavior_.Conditions)
+            foreach (Condition condition_ in behavior_.conditions)
             {
-                bool condition_found = false;
-
-                foreach (Dictionary<string, object> query in Queries)
-                {
-                    if (query.ContainsKey(condition_.Key))
-                    {
-                        satisfied = condition_.Value(query[condition_.Key]);
-                        condition_found = true;
-                        break;
-                    }
-                }
-                Assert.IsTrue(condition_found);
-                if (!satisfied)
-                {
-                    break;
-                }
+                Dictionary<string, object> query = Queries[condition_.query_name];
+                satisfied = condition_.criterion_func(query[condition_.query_entry]);
             }
             if (satisfied)
             {
@@ -209,7 +187,7 @@ public class NPC_BehaviorManager : MonoBehaviour
         return valid_responses[UnityEngine.Random.Range(0, valid_responses.Count)];
     }
 
-    public void OnInteract(gameObject sender, gameObject receiver)
+    public void OnInteract(GameObject sender, GameObject receiver)
     {
         EventInfo event_info = new EventInfo();
         event_info.sender = sender;
@@ -219,26 +197,24 @@ public class NPC_BehaviorManager : MonoBehaviour
 
     public void OnInteract(EventInfo event_info)    
     {
-        TableSubscriptions table_subscriptions = interactable.GetComponent<TableSubscriptions>();
+        TableSubscriptions table_subscriptions = event_info.receiver.GetComponent<TableSubscriptions>();
         string subscription_list = table_subscriptions.table_identifier.ToString();
 
         char[] delimiter_chars = {' ', ','};
         string[] table_identifiers = subscription_list.Split(delimiter_chars, StringSplitOptions.RemoveEmptyEntries);
 
-        List<Query> query_params;
+        var queries = new Dictionary<string, Dictionary<string, object>>();
 
-        Query sender;
-        sender.query_name = "sender";
-        sender.AllocateAndGatherQuery(event_info.sender);
-        query_params.Add(sender);
+        Dictionary<string, object> sender = new Dictionary<string, object>();
+        GatherQuery(event_info.sender);
+        queries.Add("sender", sender);
 
-        Query receiver;
-        receiver.query_name = "receiver";
-        receiver.AllocateAndGatherQuery(event_info.receiver);
-        query_params.Add(receiver);
+        Dictionary<string, object> receiver = new Dictionary<string, object>();
+        GatherQuery(event_info.receiver);
+        queries.Add("receiver", receiver);
 
         int highest_score = 0;
-        Behavior? best_response = null;
+        Behavior best_response = null;
         foreach (string table_identifier in table_identifiers)
         {
             // TODO: handle choosing one option from multiple tables

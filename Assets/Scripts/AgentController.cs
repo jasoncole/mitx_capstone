@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -48,7 +49,7 @@ public class AgentController : MonoBehaviour
             case 2:
             if (AtEndOfPath())
             {
-                target.Interact(this);
+                target.Interact(this.GameObject());
             }
             break;
 

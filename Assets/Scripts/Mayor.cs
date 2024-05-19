@@ -9,14 +9,11 @@ public class Mayor : MonoBehaviour, IRespondable
     void Awake()
     {
         // associate response funcs with conditions here
-
-        Dictionary<string, Func<object, bool>> conditions;
-        
-
+    
         Behavior behavior_entry = new Behavior();
-        behavior_entry.Init(test_callback, 0);
+        behavior_entry.Init(test_callback);
 
-        behavior_entry.AddCondition("receiver", "sadness", value => value < 10);
+        behavior_entry.AddCondition("receiver", "sadness", value => (int)value < 10);
         
 
         NPC_BehaviorManager.Instance.AddBehavior("Mayor" + "OnInteract", behavior_entry);
