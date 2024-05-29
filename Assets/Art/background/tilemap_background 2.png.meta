@@ -149,7 +149,7 @@ TextureImporter:
       physicsShape:
       - - {x: 147, y: 66}
         - {x: 2, y: 145}
-        - {x: -145, y: 65}
+        - {x: -147, y: 65}
         - {x: 0, y: -4}
       tessellationDetail: 0
       bones: []

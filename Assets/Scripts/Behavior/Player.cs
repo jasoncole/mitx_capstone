@@ -5,7 +5,8 @@ public class Player : MonoBehaviour
 {
     BehaviorIdentifier table_name = BehaviorIdentifier.ID_PLAYER;
     string[] event_names = {
-        "OnInteract"
+        "OnInteract",
+        "OnDialogueEnd"
     };
     public List<string> DialogueOptions;
 
@@ -16,13 +17,13 @@ public class Player : MonoBehaviour
 
         behavior_entry = NPC_BehaviorManager.Instance.AddBehavior(table_name.ToString() + "OnDialogueEnd");
         behavior_entry.AddCallback(PassToDialogueManager);
-        behavior_entry.response_id = RegisterDialogue("I'm not sure..");
+        behavior_entry.response_id = RegisterDialogue("...");
         behavior_entry.AddCondition("Conversation.last_line", (self, value) => (string)value == "Would you like to join our cult?");
-        
+
         behavior_entry = NPC_BehaviorManager.Instance.AddBehavior(table_name.ToString() + "OnDialogueEnd");
         behavior_entry.AddCallback(PassToDialogueManager);
-        behavior_entry.response_id = RegisterDialogue("I'm not sure..");
-        behavior_entry.AddCondition("Conversation.last_line", (self, value) => (string)value == "Would you like to join our cult?");
+        behavior_entry.response_id = RegisterDialogue("Sure, why not?");
+        behavior_entry.AddCondition("Conversation.last_line", (self, value) => (string)value == "Members get a cool robe!");
 
         foreach (string event_name in event_names)
         {

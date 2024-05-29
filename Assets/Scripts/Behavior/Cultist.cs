@@ -7,8 +7,10 @@ public class Cultist : MonoBehaviour
     string[] event_names = {
         "OnInteract",
         "OnDialogueEnd",
-        "OnTakeDamage"
+        "OnTakeDamage",
+        "OnDeath"
     };
+
     public List<string> DialogueOptions;
 
     void Awake()
@@ -36,10 +38,25 @@ public class Cultist : MonoBehaviour
         behavior_entry = NPC_BehaviorManager.Instance.AddBehavior(table_name.ToString() + "OnDialogueEnd");
         behavior_entry.AddCallback(PassToDialogueManager);
         behavior_entry.response_id = RegisterDialogue("Members get a cool robe!");
-        behavior_entry.AddCondition("Conversation.last_line", (self, value) => (string)value == "I'm not sure..");
+        behavior_entry.AddCondition("Conversation.last_line", (self, value) => (string)value == "Would you like to join our cult?");
+
+        behavior_entry = NPC_BehaviorManager.Instance.AddBehavior(table_name.ToString() + "OnDialogueEnd");
+        behavior_entry.AddCallback(GiveRobe);
+        behavior_entry.response_id = 0;
+        behavior_entry.AddCondition("Conversation.last_line", (self, value) => (string)value == "Members get a cool robe!");
+
+        behavior_entry = NPC_BehaviorManager.Instance.AddBehavior(table_name.ToString() + "OnDialogueEnd");
+        behavior_entry.AddCallback(PassToDialogueManager);
+        behavior_entry.response_id = RegisterDialogue("Hey, you're already a member! These things are expensive ya know?");
+        behavior_entry.AddCondition("Conversation.last_line", (self, value) => (string)value == "Members get a cool robe!");
+        behavior_entry.AddCondition("sender.Inventory.CultRobe", (self, value) => (int)value != 0);
 
         behavior_entry = NPC_BehaviorManager.Instance.AddBehavior(table_name.ToString() + "OnTakeDamage");
-        behavior_entry.AddCallback(AlertFaction);
+        behavior_entry.AddCallback(AlertCult);
+        behavior_entry.response_id = 0;
+
+        behavior_entry = NPC_BehaviorManager.Instance.AddBehavior(table_name.ToString() + "OnDeath");
+        behavior_entry.AddCallback(RaiseCultAwareness);
         behavior_entry.response_id = 0;
 
         foreach (string event_name in event_names)
@@ -57,8 +74,27 @@ public class Cultist : MonoBehaviour
         Dialogue.Instance.StartDialogue(event_info, DialogueOptions[response_id]);
     }
 
-    public void AlertFaction(EventInfo event_info, int response_id)
+    public void AlertCult(EventInfo event_info, int response_id)
     {
-        WorldStateManager.Instance.AlertFactionOfAttacker(event_info.sender, FactionIdentifier.ID_CULT);
+        // check if attacker is visible
+        Inventory inventory = event_info.sender.GetComponent<Inventory>();
+        if (inventory != null)
+        {
+            if (inventory.InvisibilityRobe == 2)
+            {
+                return;
+            }
+        }
+        WorldStateManager.Instance.AlertCultOfAttacker(event_info.sender);
+    }
+    public void RaiseCultAwareness(EventInfo event_info, int response_id)
+    {
+        WorldStateManager.Instance.RaiseCultAwareness();
+    }
+
+    public void GiveRobe(EventInfo event_info, int response_id)
+    {
+        WorldStateManager.Instance.player_object.GetComponent<Inventory>().CultRobe = 1;
+        Dialogue.Instance.CloseDialogue();
     }
 }

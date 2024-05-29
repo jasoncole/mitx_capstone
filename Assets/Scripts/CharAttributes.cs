@@ -9,6 +9,7 @@ public class CharAttributes : MonoBehaviour
     public float attack_range;
     public float interact_range;
     public float attack_damage;
+    public GameObject spear_prefab;
     
 
     public void UpdateDamage(float damage)
@@ -16,11 +17,9 @@ public class CharAttributes : MonoBehaviour
         attack_damage = damage;
     }
 
-    public AttackProjectile MakeProjectile(DamageRecord damage_record)
+    public void MakeProjectile(DamageRecord damage_record)
     {
-        GameObject projectile_object = new GameObject();
-        AttackProjectile projectile = projectile_object.AddComponent<AttackProjectile>();
-        return projectile;
+        Instantiate(spear_prefab, gameObject.transform.position, Quaternion.identity);
     }
 
     public DamageRecord MakeDamageRecord(GameObject attacker, GameObject target)

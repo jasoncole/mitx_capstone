@@ -19,6 +19,5 @@ public class GlobalState : MonoBehaviour, IGatherable
 
     public void FillQuery(string parent_name, Dictionary<string, object> query)
     {
-
     }
 }

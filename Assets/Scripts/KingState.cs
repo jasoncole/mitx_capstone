@@ -2,10 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MayorState : MonoBehaviour, IGatherable
+public class KingState : MonoBehaviour, IGatherable
 {
     public bool IsFirstMeeting = true;
-    public string gather_name => "Mayor";
+    public string gather_name => "King";
     // Start is called before the first frame update
     void Start()
     {

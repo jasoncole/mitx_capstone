@@ -1,6 +1,5 @@
 using Unity.Properties;
 using Unity.VisualScripting;
-using Unity.VisualScripting.Dependencies.Sqlite;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
@@ -45,6 +44,8 @@ public class AgentController : MonoBehaviour
         move_state = 0;
         // 1 = attacking
         // 2 = interacting
+
+        Attributes = GetComponent<CharAttributes>();
     }
 
     // Update is called once per frame
@@ -133,9 +134,12 @@ public class AgentController : MonoBehaviour
 
     public void Die()
     {
-        // start death animation
-        ChangeAnimationState("Death");
         can_move = false;
+        if (GetComponent<MouseControl>() != null)
+        {
+            // TODO: YOU LOSE
+        }
+        Destroy(gameObject);
     }
 
     public void AllowMovement(bool allow)
@@ -150,7 +154,7 @@ public class AgentController : MonoBehaviour
             return;
         }
 
-        animator_.Play(new_state);
+        //animator_.Play(new_state);
         current_animation_state = new_state;
 
     }

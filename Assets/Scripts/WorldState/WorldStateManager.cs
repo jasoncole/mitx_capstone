@@ -40,6 +40,8 @@ public class WorldStateManager : MonoBehaviour
         };
     }
 
+    public GameObject player_object;
+
     public Dictionary<BehaviorIdentifier, FactionIdentifier> BehaviorFactionLookup;
 
     // Start is called before the first frame update
@@ -56,14 +58,7 @@ public class WorldStateManager : MonoBehaviour
 
     public void GatherFactionQuery(Dictionary<string, object> query, BehaviorIdentifier behavior_id)
     {
-        FactionIdentifier faction_id = 0;
-        foreach (KeyValuePair<BehaviorIdentifier, FactionIdentifier> entry in BehaviorFactionLookup)
-        {
-            if (behavior_id.HasFlag(entry.Key))
-            {
-                faction_id |= entry.Value;
-            }
-        }
+        FactionIdentifier faction_id = GetFactionFromBehavior(behavior_id);
 
         if (query.ContainsKey("town") == false & faction_id.HasFlag(FactionIdentifier.ID_TOWN))
         {
@@ -72,7 +67,7 @@ public class WorldStateManager : MonoBehaviour
         }
         if (query.ContainsKey("cult") == false & faction_id.HasFlag(FactionIdentifier.ID_CULT))
         {
-            GetComponent<FactionTownState>().FillQuery(null, query);
+            GetComponent<FactionCultState>().FillQuery(null, query);
             query.Add("cult", true);
         }
     }
@@ -95,9 +90,44 @@ public class WorldStateManager : MonoBehaviour
         GetComponent<GlobalState>().FillQuery(null, query);
     }
 
-    public void AlertFactionOfAttacker(GameObject attacker, FactionIdentifier faction)
-    {
+    public void AlertCultOfAttacker(GameObject attacker)
+    {        
+        FactionCultState faction_cult = GetComponent<FactionCultState>();
+        if (attacker.GetComponent<MouseControl>() != null) // if player character
+        {
+            faction_cult.PlayerHostile = true;
+        }
+        faction_cult.awareness = 2;
 
+        BehaviorSubscriptions[] components = GameObject.FindObjectsOfType<BehaviorSubscriptions>();
+        foreach (var component_ in components)
+        {
+            if (component_.behavior_identifier.HasFlag(BehaviorIdentifier.ID_CULTIST))
+            {
+                component_.GetComponent<AgentController>().MoveToAttackTarget(attacker);
+            }
+        }
     }
 
+    public void RaiseCultAwareness()
+    {
+        FactionCultState faction_cult = GetComponent<FactionCultState>();
+        if (faction_cult.awareness == 0)
+        {
+            faction_cult.awareness = 1;
+        }
+    }
+
+    public FactionIdentifier GetFactionFromBehavior(BehaviorIdentifier behavior_id)
+    {
+        FactionIdentifier faction_id = new FactionIdentifier();
+        foreach (KeyValuePair<BehaviorIdentifier, FactionIdentifier> entry in BehaviorFactionLookup)
+        {
+            if (behavior_id.HasFlag(entry.Key))
+            {
+                faction_id |= entry.Value;
+            }
+        }
+        return faction_id;
+    }
 }

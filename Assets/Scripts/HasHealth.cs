@@ -15,7 +15,7 @@ public class HasHealth : MonoBehaviour, IGatherable
 
     void Awake()
     {
-        health_bar = GetComponentInChildren<HealthBar>();
+        //health_bar = GetComponentInChildren<HealthBar>();
     }
     
     // Start is called before the first frame update
@@ -37,8 +37,9 @@ public class HasHealth : MonoBehaviour, IGatherable
         if (RemainingHealth < 0)
         {
             NPC_BehaviorManager.Instance.OnDeath(damage_record);
+            GetComponent<AgentController>().Die();
         }
-        GetComponent<AgentController>().Die();
+        
     }
 
     public void FillQuery(string parent_name, Dictionary<string, object> query)
