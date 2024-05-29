@@ -1,24 +1,40 @@
+using Unity.Properties;
 using Unity.VisualScripting;
+using Unity.VisualScripting.Dependencies.Sqlite;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
 
 // BUG: if you interact with something right as you reach the end of a separate path, the game will allow you to interact immediately
 
+public class DamageRecord
+{
+    public GameObject attacker;
+    public GameObject target;
+    public float Damage;
+
+    public void ApplyDamage()
+    {
+        target.GetComponent<HasHealth>().ApplyDamage(this);
+    }
+}
+
 public class AgentController : MonoBehaviour
 {
     Vector3 target_point;
-    Interactable target;
+    GameObject target;
     NavMeshAgent agent;
-    [SerializeField] float attack_range;
-    [SerializeField] float interact_range;
+
+    CharAttributes Attributes;
     int move_state;
-    
-    public delegate void OnAttackStart();
-    public event OnAttackStart AttackStarted;
 
     // check if reached end of path
     public float pathEndThreshold = 0.1f;
     private bool hasPath = false;
+    public bool IsRanged;
+    public bool can_move;
+    Animator animator_;
+    public string current_animation_state;
 
     void Awake()
     {
@@ -42,14 +58,14 @@ public class AgentController : MonoBehaviour
             case 1:
             if (AtEndOfPath())
             {
-                AttackStarted?.Invoke();
+                StartAttack();
             }
             break;
 
             case 2:
             if (AtEndOfPath())
             {
-                target.Interact(this.GameObject());
+                NPC_BehaviorManager.Instance.OnInteract(this.GameObject(), target);
             }
             break;
 
@@ -86,23 +102,63 @@ public class AgentController : MonoBehaviour
         agent.SetDestination(new Vector3(target_point.x, target_point.y, transform.position.z));
     }
 
-    public void AttackTarget(Interactable enemy)
+    public void MoveToAttackTarget(GameObject enemy)
     {
         target = enemy;
         move_state = 1;
-        agent.stoppingDistance = attack_range;
+        agent.stoppingDistance = Attributes.attack_range;
         agent.SetDestination(new Vector3(target.transform.position.x, target.transform.position.y, transform.position.z));
     }
 
-    public void Interact(Interactable interactable_)
+    public void InteractWithTarget(GameObject target_)
     {
-        target = interactable_;
+        target = target_;
         move_state = 2;
-        agent.stoppingDistance = interact_range;
+        agent.stoppingDistance = Attributes.interact_range;
         agent.SetDestination(new Vector3(target.transform.position.x, target.transform.position.y, transform.position.z));
     }
 
-    /*
-    void AttackMove()
-    */
+    void StartAttack()
+    {
+        DamageRecord damage_record = Attributes.MakeDamageRecord(gameObject, target);
+        if (IsRanged)
+        {
+            Attributes.MakeProjectile(damage_record);
+        }
+        else
+        {
+            damage_record.ApplyDamage();
+        }
+    }
+
+    public void Die()
+    {
+        // start death animation
+        ChangeAnimationState("Death");
+        can_move = false;
+    }
+
+    public void AllowMovement(bool allow)
+    {
+        can_move = allow;
+    }
+
+    public void ChangeAnimationState(string new_state)
+    {
+        if (new_state == current_animation_state)
+        {
+            return;
+        }
+
+        animator_.Play(new_state);
+        current_animation_state = new_state;
+
+    }
+
+    public void UpdateMovespeed(float movespeed_)
+    {
+        agent.speed = movespeed_;
+    }
 }
+
+

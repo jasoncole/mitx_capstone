@@ -1,18 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
-using System;
 using UnityEngine;
 
-[Flags] public enum TableIdentifier
+public class GlobalState : MonoBehaviour, IGatherable
 {
-    Mayor = 1<<0,
-    Grunt = 1<<1
-}
-
-public class TableSubscriptions : MonoBehaviour
-{
-    public TableIdentifier table_identifier;
-
+    public string gather_name => "Global";
     // Start is called before the first frame update
     void Start()
     {
@@ -23,5 +15,10 @@ public class TableSubscriptions : MonoBehaviour
     void Update()
     {
         
+    }
+
+    public void FillQuery(string parent_name, Dictionary<string, object> query)
+    {
+
     }
 }

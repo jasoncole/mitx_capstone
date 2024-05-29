@@ -1,10 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
+using UnityEditor.U2D.Animation;
 using UnityEngine;
 
 public class MouseControl : MonoBehaviour
 {
-    public Camera camera;
     public LayerMask layersToHit;
     AgentController agent_control;
 
@@ -21,16 +22,28 @@ public class MouseControl : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!agent_control.can_move)
+        {
+            return;
+        }
         if (Input.GetMouseButtonDown(1))
         {
-            Collider2D collider = Physics2D.OverlapPoint(camera.ScreenToWorldPoint(Input.mousePosition), layersToHit);
+            Collider2D collider = Physics2D.OverlapPoint(Camera.main.ScreenToWorldPoint(Input.mousePosition), layersToHit);
             if (collider != null)
             {
-                agent_control.Interact(collider.GetComponent<Interactable>());
+                agent_control.InteractWithTarget(collider.GameObject());
             }
             else
             {
-                agent_control.MoveToPosition(camera.ScreenToWorldPoint(Input.mousePosition));
+                agent_control.MoveToPosition(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+            }
+        }
+        else if (Input.GetKeyDown(KeyCode.A))
+        {
+            Collider2D collider = Physics2D.OverlapPoint(Camera.main.ScreenToWorldPoint(Input.mousePosition), layersToHit);
+            if (collider != null)
+            {
+                agent_control.MoveToAttackTarget(collider.GameObject());
             }
         }
     }
